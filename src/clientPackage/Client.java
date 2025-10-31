@@ -1,46 +1,78 @@
 package clientPackage;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Scanner;
+import common.Operation;
+import common.Result;
 
 public class Client {
 
     public static void main(String[] args) {
-        String serverAddress = "localhost"; // ou "127.0.0.1"
-        int serverPort = 1234;
+        // Pour les tests en local
+        String serverAddress = "localhost";
 
-        // Pour les tests en réseau local (Étape 2, point 3)
-        // Il suffit de changer l'adresse "localhost" par l'adresse IP de la machine serveur.
+        // Pour les tests en réseau local (Étape 2, point 4)
+        // Remplacez "localhost" par l'adresse IP de la machine serveur.
         // Exemple : String serverAddress = "192.168.1.50";
 
-        try {
-            // Pour les tests en réseau local, on peut utiliser InetAddress pour résoudre le nom
-            InetAddress adr = InetAddress.getByName(serverAddress);
-            Socket socket = new Socket(adr, serverPort);
+        int serverPort = 1234;
 
-            System.out.println("Connecté au serveur à l'adresse " + serverAddress + " sur le port " + serverPort);
+        try (
+                Socket socket = new Socket(serverAddress, serverPort);
+                // Important : initialiser ObjectOutputStream AVANT ObjectInputStream
+                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+                Scanner scanner = new Scanner(System.in)
+        ) {
+            System.out.println("Connecté au serveur de calculatrice sur " + serverAddress + ":" + serverPort);
 
-            // Outil pour lire les messages envoyés par le serveur
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            // Lire le message de bienvenue du serveur
+            String welcomeMessage = (String) in.readObject();
+            System.out.println("Serveur : " + welcomeMessage);
 
-            // Lire le message de bienvenue (numéro d'ordre) envoyé par le serveur
-            String serverResponse = in.readLine();
+            while (true) {
+                System.out.println("\nEntrez une opération (ex: 5 + 3) ou 'exit' pour quitter :");
+                String userInput = scanner.nextLine();
 
-            if (serverResponse != null) {
-                System.out.println("Message reçu du serveur : " + serverResponse);
+                if ("exit".equalsIgnoreCase(userInput)) {
+                    // Envoie une opération spéciale pour indiquer la déconnexion
+                    out.writeObject(new Operation(0, 0, 'q'));
+                    break;
+                }
+
+                // Parser l'entrée utilisateur
+                String[] parts = userInput.split(" ");
+                if (parts.length != 3) {
+                    System.out.println("Format invalide. Veuillez respecter le format : nombre operateur nombre");
+                    continue;
+                }
+
+                try {
+                    double operand1 = Double.parseDouble(parts[0]);
+                    char operator = parts[1].charAt(0);
+                    double operand2 = Double.parseDouble(parts[2]);
+
+                    // Créer et envoyer l'objet Operation
+                    Operation op = new Operation(operand1, operand2, operator);
+                    out.writeObject(op);
+                    System.out.println("Opération envoyée au serveur...");
+
+                    // Attendre et lire l'objet Result
+                    Result result = (Result) in.readObject();
+                    System.out.println(result); // Utilise la méthode toString() de Result
+
+                } catch (NumberFormatException e) {
+                    System.out.println("Erreur : les opérandes doivent être des nombres valides.");
+                }
             }
 
-            // Fermer la connexion
-            // Pas besoin de le faire explicitement si on utilise un try-with-resources,
-            // mais ici on ferme manuellement pour la clarté.
-            socket.close();
-            System.out.println("Connexion fermée.");
-
-        } catch (IOException e) {
-            System.err.println("Erreur client : " + e.getMessage());
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Erreur de communication avec le serveur : " + e.getMessage());
+        } finally {
+            System.out.println("Déconnexion du client.");
         }
     }
 }
