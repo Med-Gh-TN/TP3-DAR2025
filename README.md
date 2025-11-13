@@ -88,7 +88,7 @@ Ce dépôt utilise plusieurs branches pour organiser le développement et l'hist
 
 *   **`Activite_3_1`** et **`Activite_3_2`** :
     Ces branches représentent des étapes intermédiaires du développement, probablement liées à des exercices ou des "Activités" spécifiques du cahier des charges. Elles permettent de visualiser l'évolution du code :
-    *   `Activite_3_1` pourrait contenir une version initiale du projet, par exemple un serveur qui ne gère qu'un seul client à la fois (mono-thread).
-    *   `Activite_3_2` pourrait représenter l'étape où le multi-threading a été introduit pour permettre la gestion de plusieurs clients simultanément.
+    *   `Activite_3_1`  contenu une version initiale du projet,  un serveur qui ne gère qu'un seul client à la fois (mono-thread).
+    *   `Activite_3_2`  représente l'étape où le multi-threading a été introduit pour permettre la gestion de plusieurs clients simultanément.
 
 Naviguer entre ces branches permet de comprendre la progression logique du développement, de la version la plus simple à la version finale.
